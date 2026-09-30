@@ -56,47 +56,6 @@ type AssessmentInput struct {
 	RequestKey string `json:"request_key"`
 }
 
-type probeTimeEnvelope struct {
-	year       int
-	month      time.Month
-	day        int
-	hour       int
-	minute     int
-	second     int
-	nanosecond int
-}
-
-func envelopeProbeTime(value time.Time) probeTimeEnvelope {
-	year, month, day := value.Date()
-	hour, minute, second := value.Clock()
-	return probeTimeEnvelope{
-		year:       year,
-		month:      month,
-		day:        day,
-		hour:       hour,
-		minute:     minute,
-		second:     second,
-		nanosecond: value.Nanosecond(),
-	}
-}
-
-func (envelope probeTimeEnvelope) instant() time.Time {
-	return time.Date(
-		envelope.year,
-		envelope.month,
-		envelope.day,
-		envelope.hour,
-		envelope.minute,
-		envelope.second,
-		envelope.nanosecond,
-		time.UTC,
-	)
-}
-
-func probeObservationInstant(value time.Time) time.Time {
-	return envelopeProbeTime(value).instant()
-}
-
 func NormalizePlanInput(input PlanCreateInput) PlanCreateInput {
 	input.Zone = canonicalName(input.Zone)
 	return input
@@ -271,9 +230,7 @@ func ValidateProbeInput(input ProbeInput, now time.Time) error {
 	}
 	if input.ObservedAt.IsZero() {
 		details["observed_at"] = "is required"
-	} else if probeObservationInstant(input.ObservedAt).After(
-		probeObservationInstant(now).Add(5 * time.Minute),
-	) {
+	} else if input.ObservedAt.UTC().After(now.UTC().Add(5 * time.Minute)) {
 		details["observed_at"] = "cannot be more than five minutes in the future"
 	}
 	if len(details) > 0 {
