@@ -69,7 +69,7 @@ func newProbeIdentityPayload(leaseID string, input ProbeInput) probeIdentityPayl
 		success:        input.Success,
 		observedSerial: input.ObservedSerial,
 		latencyMS:      input.LatencyMS,
-		observedAt:     input.ObservedAt.Format(time.RFC3339Nano),
+		observedAt:     input.ObservedAt.UTC().Format(time.RFC3339Nano),
 	}
 }
 

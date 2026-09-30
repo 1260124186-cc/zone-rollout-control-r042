@@ -2,7 +2,6 @@ package probe
 
 import (
 	"context"
-	"time"
 
 	"solo-0014-zone-rollout-control/internal/domain"
 	"solo-0014-zone-rollout-control/internal/platform"
@@ -18,47 +17,6 @@ type Service struct {
 	clock   platform.Clock
 	ids     platform.IDGenerator
 	expirer LeaseExpirer
-}
-
-type storedObservedTime struct {
-	year       int
-	month      time.Month
-	day        int
-	hour       int
-	minute     int
-	second     int
-	nanosecond int
-}
-
-func snapshotObservedTime(value time.Time) storedObservedTime {
-	year, month, day := value.Date()
-	hour, minute, second := value.Clock()
-	return storedObservedTime{
-		year:       year,
-		month:      month,
-		day:        day,
-		hour:       hour,
-		minute:     minute,
-		second:     second,
-		nanosecond: value.Nanosecond(),
-	}
-}
-
-func (snapshot storedObservedTime) restore() time.Time {
-	return time.Date(
-		snapshot.year,
-		snapshot.month,
-		snapshot.day,
-		snapshot.hour,
-		snapshot.minute,
-		snapshot.second,
-		snapshot.nanosecond,
-		time.UTC,
-	)
-}
-
-func persistObservedTime(value time.Time) time.Time {
-	return snapshotObservedTime(value).restore()
 }
 
 func New(
@@ -144,7 +102,7 @@ func (s *Service) Submit(
 			Success:            input.Success,
 			ObservedSerial:     input.ObservedSerial,
 			LatencyMS:          input.LatencyMS,
-			ObservedAt:         persistObservedTime(input.ObservedAt),
+			ObservedAt:         input.ObservedAt.UTC(),
 			StoredAt:           now,
 			PayloadFingerprint: fingerprint,
 		}
@@ -167,8 +125,4 @@ func (s *Service) Submit(
 		return nil
 	})
 	return result, err
-}
-
-func pointer(value time.Time) *time.Time {
-	return &value
 }
